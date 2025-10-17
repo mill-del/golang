@@ -1,24 +1,59 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import { Container } from "react-bootstrap";
+import AppNavbar from "./components/Navbar";
+import TaskForm from "./components/TaskForm";
+import TaskList from "./components/TaskList";
+import api from "./services/api";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
 
 function App() {
+  const [tasks, setTasks] = useState([]);
+
+  const fetchTasks = async () => {
+    const res = await api.get("/tasks");
+    setTasks(res.data);
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const addTask = async (task) => {
+    await api.post("/tasks", task);
+    fetchTasks();
+  };
+
+  const deleteTask = async (id) => {
+    await api.delete(`/tasks/${id}`);
+    fetchTasks();
+  };
+
+  const updateTask = async (id, updatedTask) => {
+    await api.put(`/tasks/${id}`, updatedTask);
+    fetchTasks();
+  };
+
+  const toggleComplete = async (id) => {
+    const task = tasks.find((t) => t.id === id);
+    const updated = { ...task, completed: !task.completed };
+    await api.put(`/tasks/${id}`, updated);
+    fetchTasks();
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <AppNavbar />
+      <Container className="py-4">
+        <TaskForm onAdd={addTask} />
+        <TaskList
+          tasks={tasks}
+          onDelete={deleteTask}
+          onUpdate={updateTask}
+          onToggleComplete={toggleComplete}
+        />
+      </Container>
+    </>
   );
 }
 
